@@ -895,7 +895,6 @@ then
 	#SBATCH --time 00:00:10
 	#SBATCH --cpus-per-task 1
 	#SBATCH --hold
-	#SBATCH --ntasks 1
 	#SBATCH --job-name "${groupname}_dedup_guard"
 	${sbatch_wait}
 	date
@@ -912,7 +911,6 @@ DEDUPGUARD`
 	#SBATCH --error $debugdir/dedup-%j.err
 	#SBATCH --time 00:00:10
 	#SBATCH --cpus-per-task 1
-	#SBATCH --ntasks 1
 	#SBATCH --job-name "${groupname}_dedup"
 	${sbatch_wait}
 	date
@@ -944,7 +942,6 @@ DEDUP`
 	#SBATCH --error $debugdir/post_dedup-%j.err
 	#SBATCH --time 00:00:10
 	#SBATCH --cpus-per-task 1
-	#SBATCH --ntasks 1
 	#SBATCH --job-name "${groupname}_post_dedup"
 	#SBATCH --dependson ${dependguard}
 	date
@@ -978,7 +975,6 @@ then
 	#SBATCH --error $debugdir/dupcheck-%j.err
 	#SBATCH --time 00:00:10
 	#SBATCH --cpus-per-task 1
-	#SBATCH --ntasks 1
 	#SBATCH --mem-per-cpu 7G
 	#SBATCH --job-name "${groupname}_dupcheck"
 	${sbatch_wait}
@@ -1001,7 +997,6 @@ DUPCHECK`
 		#SBATCH --error $debugdir/stats-%j.err
 		#SBATCH --time 01:00:00
 		#SBATCH --cpus-per-task 1
-		#SBATCH --ntasks 1
 		#SBATCH --mem-per-cpu 7G
 		#SBATCH --job-name "${groupname}_stats"
 		${sbatch_wait}
@@ -1042,7 +1037,6 @@ STATS`
 	#SBATCH --error $debugdir/hic-%j.err	
 	#SBATCH --time 1-00:00:00
 	#SBATCH --cpus-per-task 1
-	#SBATCH --ntasks 1
 	#SBATCH --mem-per-cpu 7G
 	#SBATCH --job-name "${groupname}_hic"
 	#SBATCH --dependson $dependstats
@@ -1072,7 +1066,6 @@ HIC`
 	#SBATCH --error $debugdir/hic30-%j.err
 	#SBATCH --time 1-00:00:00
 	#SBATCH --cpus-per-task 1
-	#SBATCH --ntasks 1
 	#SBATCH --mem-per-cpu 7G
 	#SBATCH --job-name "${groupname}_hic30"
 	#SBATCH --dependson ${dependstats}
@@ -1116,7 +1109,6 @@ HIC30`
 	#SBATCH --output $debugdir/hiccups_wrap-%j.out
 	#SBATCH --error $debugdir/hiccups_wrap-%j.err
 	#SBATCH --time 12:00:00
-	#SBATCH --ntasks 1
 	#SBATCH --job-name "${groupname}_hiccups_wrap"
 	${sbatch_wait}
 	${load_gpu}
@@ -1144,7 +1136,6 @@ HICCUPS`
 	#SBATCH --output $debugdir/arrowhead_wrap-%j.out
 	#SBATCH --error $debugdir/arrowhead_wrap-%j.err
 	#SBATCH --time 01:00:00
-	#SBATCH --ntasks 1
 	#SBATCH --job-name "${groupname}_arrowhead_wrap"
 	${sbatch_wait}
 	${load_java}
@@ -1167,7 +1158,6 @@ ARROWS`
 	#SBATCH --error $debugdir/fincln-%j.err
 	#SBATCH --time 01:00:00
 	#SBATCH --cpus-per-task 1
-	#SBATCH --ntasks 1
 	#SBATCH --job-name "${groupname}_prep_done"
 	#SBATCH --dependson $dependarrows
 	date
@@ -1184,7 +1174,6 @@ else
 	#SBATCH --error $debugdir/fincln1-%j.err
 	#SBATCH --time 01:00:00
 	#SBATCH --cpus-per-task 1
-	#SBATCH --ntasks 1
 	#SBATCH --job-name "${groupname}_prep_done"     
 	#SBATCH --dependson $dependarrows
 	date
