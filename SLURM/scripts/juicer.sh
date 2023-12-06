@@ -484,7 +484,7 @@ SPLITEND`
                 read1=${splitdir}"/*${read1str}*.fastq"
 	    done
 	    
-	    srun --cpus-per-task 1 --partition "$int_queue" --time 00:00:10 --output $debugdir/wait-%j.out --error $debugdir/wait-%j.err --dependson $dependsplit --job-name "${groupname}_wait" sleep 1
+	    srun --cpus-per-task 1 --partition "$int_queue" --time 00:00:10 --output $debugdir/wait-%j.out --error $debugdir/wait-%j.err --dependency $dependsplit --job-name "${groupname}_wait" sleep 1
         else
             cp -rs ${fastqdir} ${splitdir}
             wait
@@ -645,7 +645,7 @@ ALGNR2`
 		#SBATCH --mem-per-cpu 7G
 		#SBATCH --time 1-00:00:00
 		#SBATCH --cpus-per-task 8 
-		#SBATCH --dependson $dependalign
+		#SBATCH --dependency $dependalign
 		#SBATCH --job-name "${groupname}_merge_${jname}"
 		export LC_COLLATE=C
 		date
@@ -775,7 +775,7 @@ MRGALL`
 		#SBATCH --time 00:00:10
 		#SBATCH --partition $queue
 		#SBATCH --job-name "${groupname}_check"
-		#SBATCH --dependson $dependmerge
+		#SBATCH --dependency $dependmerge
 		date
 		echo "Checking $f"
 		if [ ! -e $f ]
@@ -795,7 +795,7 @@ if [ -z $final ] && [ -z $dedup ] && [ -z $postproc ]
 then
     if [ -z $merge ]
     then
-	sbatch_wait="#SBATCH --dependson $dependmergecheck"
+	sbatch_wait="#SBATCH --dependency $dependmergecheck"
     else
         sbatch_wait=""
     fi
@@ -852,7 +852,7 @@ if [ -z $final ] && [ -z $postproc ]
 then
     if [ -z $dedup ]
     then
-        sbatch_wait="#SBATCH --dependson $dependmrgsrt"
+        sbatch_wait="#SBATCH --dependency $dependmrgsrt"
     else
         sbatch_wait=""
     fi
@@ -895,7 +895,7 @@ DEDUPGUARD`
 	awk -v queue=$long_queue -v groupname=$groupname -v debugdir=$debugdir -v dir=$outputdir -v topDir=$topDir -v juicedir=$juiceDir -v site=$site -v genomeID=$genomeID -v genomePath=$genomePath -v user=$USER -v guardjid=$guardjid -f $juiceDir/scripts/split_rmdups.awk $outputdir/merged_sort.txt
 	##Schedule new job to run after last dedup part:
 	##Push guard to run after last dedup is completed:
-	##srun --ntasks=1 --cpus-per-task 1 --partition "$queue" --time 00:00:10 --output ${debugdir}/dedup_requeue-%j.out --error ${debugdir}/dedup-requeue-%j.err --job-name "$groupname_msplit0" --dependson singleton echo ID: $ echo "\${!SLURM_JOB_ID}"; scontrol update JobID=$guardjid dependency=afterok:\$SLURM_JOB_ID
+	##srun --ntasks=1 --cpus-per-task 1 --partition "$queue" --time 00:00:10 --output ${debugdir}/dedup_requeue-%j.out --error ${debugdir}/dedup-requeue-%j.err --job-name "$groupname_msplit0" --dependency singleton echo ID: $ echo "\${!SLURM_JOB_ID}"; scontrol update JobID=$guardjid dependency=afterok:\$SLURM_JOB_ID
 	squeue --user $USER --format "%A %T %j %E %R" | column -t
 	date
 	scontrol release $guardjid
@@ -915,7 +915,7 @@ DEDUP`
 	#SBATCH --time 00:00:10
 	#SBATCH --cpus-per-task 1
 	#SBATCH --job-name "${groupname}_post_dedup"
-	#SBATCH --dependson ${dependguard}
+	#SBATCH --dependency ${dependguard}
 	date
 	rm -Rf $tmpdir;
 	find $debugdir -type f -size 0 | xargs rm
@@ -924,7 +924,7 @@ DEDUP`
 MSPLITWAIT`
 
     dependmsplit="afterok:$jid"
-    sbatch_wait="#SBATCH --dependson $dependmsplit"
+    sbatch_wait="#SBATCH --dependency $dependmsplit"
 else
     sbatch_wait=""
 fi
@@ -957,7 +957,7 @@ then
 	awk 'NR==1{if (NF == 2 && \\\$1 == \\\$2){print "Sorted and dups/no dups files add up"}else{print "Problem" >> ${errorfile}; print "***! Error! The sorted file and dups/no dups files do not add up, or were empty."}}' $debugdir/dupcheck-${groupname} 
         date                                                                                                           
 DUPCHECK`
-    sbatch_wait="#SBATCH --dependson afterok:$jid"
+    sbatch_wait="#SBATCH --dependency afterok:$jid"
 
     #Skip if post-processing only is required
     if [ -z $postproc ]
@@ -1011,7 +1011,7 @@ STATS`
 	#SBATCH --cpus-per-task 1
 	#SBATCH --mem-per-cpu 7G
 	#SBATCH --job-name "${groupname}_hic"
-	#SBATCH --dependson $dependstats
+	#SBATCH --dependency $dependstats
 	${load_java}
 	export IBM_JAVA_OPTIONS="-Xmx48192m -Xgcthreads1"
 	date
@@ -1040,7 +1040,7 @@ HIC`
 	#SBATCH --cpus-per-task 1
 	#SBATCH --mem-per-cpu 7G
 	#SBATCH --job-name "${groupname}_hic30"
-	#SBATCH --dependson ${dependstats}
+	#SBATCH --dependency ${dependstats}
 	${load_java}
 	export IBM_JAVA_OPTIONS="-Xmx48192m -Xgcthreads1"
 	date
@@ -1063,7 +1063,7 @@ HIC30`
 
 	if [ -z $postproc ]
 	then
-		sbatch_wait="#SBATCH --dependson $dependhic30"
+		sbatch_wait="#SBATCH --dependency $dependhic30"
 	else
 		sbatch_wait=""
 	fi
@@ -1128,7 +1128,7 @@ ARROWS`
 	#SBATCH --time 01:00:00
 	#SBATCH --cpus-per-task 1
 	#SBATCH --job-name "${groupname}_prep_done"
-	#SBATCH --dependson $dependarrows
+	#SBATCH --dependency $dependarrows
 	date
 	export splitdir=${splitdir}; export outputdir=${outputdir}; ${juiceDir}/scripts/check.sh
 	date
@@ -1144,7 +1144,7 @@ else
 	#SBATCH --time 01:00:00
 	#SBATCH --cpus-per-task 1
 	#SBATCH --job-name "${groupname}_prep_done"     
-	#SBATCH --dependson $dependarrows
+	#SBATCH --dependency $dependarrows
 	date
 	export splitdir=${splitdir}; export outputdir=${outputdir}; export early=1; ${juiceDir}/scripts/check.sh
 	date
