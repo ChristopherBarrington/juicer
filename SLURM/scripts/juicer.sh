@@ -108,6 +108,8 @@ else
     juiceDir="/gpfs0/juicer/"
     # default queue, can also be set in options
     queue="commons"
+    # default interactive queue, can also be set in options
+    int_queue="commons"
     # default long queue, can also be set in options
     long_queue="long"
 fi
@@ -144,6 +146,7 @@ usageHelp="Usage: ${0##*/} [-g genomeID] [-d topDir] [-q queue] [-l long queue] 
 genomeHelp="* [genomeID] must be defined in the script, e.g. \"hg19\" or \"mm10\" (default \n  \"$genomeID\"); alternatively, it can be defined using the -z command"
 dirHelp="* [topDir] is the top level directory (default\n  \"$topDir\")\n     [topDir]/fastq must contain the fastq files\n     [topDir]/splits will be created to contain the temporary split files\n     [topDir]/aligned will be created for the final alignment"
 queueHelp="* [queue] is the queue for running alignments (default \"$queue\")"
+intQueueHelp="* [interactive queue] is the queue for running interactive jobs (default \"$int_queue\")"
 longQueueHelp="* [long queue] is the queue for running longer jobs such as the hic file\n  creation (default \"$long_queue\")"
 siteHelp="* [site] must be defined in the script, e.g.  \"HindIII\" or \"MboI\" \n  (default \"$site\")"
 aboutHelp="* [about]: enter description of experiment, enclosed in single quotes"
@@ -167,6 +170,7 @@ printHelpAndExit() {
     echo -e "$genomeHelp"
     echo -e "$dirHelp"
     echo -e "$queueHelp"
+    echo -e "$intQueueHelp"
     echo -e "$longQueueHelp"
     echo -e "$siteHelp"
     echo -e "$aboutHelp"
@@ -187,13 +191,14 @@ printHelpAndExit() {
     exit "$1"
 }
 
-while getopts "d:g:R:a:hrq:s:p:l:y:z:S:C:D:Q:L:b:t:x" opt; do
+while getopts "d:g:R:a:hrq:i:s:p:l:y:z:S:C:D:Q:L:b:t:x" opt; do
     case $opt in
 	g) genomeID=$OPTARG ;;
 	h) printHelpAndExit 0;;
 	d) topDir=$OPTARG ;;
 	l) long_queue=$OPTARG ;;
 	q) queue=$OPTARG ;;
+	i) int_queue=$OPTARG ;;
 	s) site=$OPTARG ;;
 	R) shortreadend=$OPTARG ;;
 	r) shortread=1 ;;  #use short read aligner
@@ -506,7 +511,7 @@ SPLITEND`
                 read1=${splitdir}"/*${read1str}*.fastq"
 	    done
 	    
-	    srun -c 1 -p "$queue" -t 1 -o $debugdir/wait-%j.out -e $debugdir/wait-%j.err -d $dependsplit -J "${groupname}_wait" sleep 1
+	    srun -c 1 -p "$int_queue" -t 1 -o $debugdir/wait-%j.out -e $debugdir/wait-%j.err -d $dependsplit -J "${groupname}_wait" sleep 1
         else
             cp -rs ${fastqdir} ${splitdir}
             wait
