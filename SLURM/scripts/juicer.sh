@@ -142,7 +142,7 @@ about=""
 nofrag=0
 
 ## Read arguments                                                     
-usageHelp="Usage: ${0##*/} [-g genomeID] [-d topDir] [-q queue] [-l long queue] [-s site]\n                 [-a about] [-R end] [-S stage] [-p chrom.sizes path]\n                 [-y restriction site file] [-z reference genome file]\n                 [-C chunk size] [-D Juicer scripts directory]\n                 [-Q queue time limit] [-L long queue time limit] [-b ligation] [-t threads]\n                 [-r] [-h] [-x]"
+usageHelp="Usage: ${0##*/} [-g genomeID] [-d topDir] [-q queue] [-l long queue] [-s site]\n                 [-a about] [-R end] [-S stage] [-p chrom.sizes path]\n                 [-y restriction site file] [-z reference genome file]\n                 [-C chunk size] [-D Juicer scripts directory]\n                 [-Q queue time limit] [-L long queue time limit] [-b ligation]\n                 [-r] [-h] [-x]"
 genomeHelp="* [genomeID] must be defined in the script, e.g. \"hg19\" or \"mm10\" (default \n  \"$genomeID\"); alternatively, it can be defined using the -z command"
 dirHelp="* [topDir] is the top level directory (default\n  \"$topDir\")\n     [topDir]/fastq must contain the fastq files\n     [topDir]/splits will be created to contain the temporary split files\n     [topDir]/aligned will be created for the final alignment"
 queueHelp="* [queue] is the queue for running alignments (default \"$queue\")"
@@ -161,7 +161,6 @@ refSeqHelp="* [reference genome file]: enter path for reference sequence file, B
 queueTimeHelp="* [queue time limit]: time limit for queue, i.e. -W 12:00 is 12 hours\n  (default ${queue_time})"
 longQueueTimeHelp="* [long queue time limit]: time limit for long queue, i.e. -W 168:00 is one week\n  (default ${long_queue_time})"
 ligationHelp="* [ligation junction]: use this string when counting ligation junctions"
-threadsHelp="* [threads]: number of threads when running BWA alignment"
 excludeHelp="* -x: exclude fragment-delimited maps from hic file creation"
 helpHelp="* -h: print this help and exit"
 
@@ -185,7 +184,6 @@ printHelpAndExit() {
     echo -e "$queueTimeHelp"
     echo -e "$longQueueTimeHelp"
     echo -e "$ligationHelp"
-    echo -e "$threadsHelp"
     echo "$excludeHelp"
     echo "$helpHelp"
     exit "$1"
@@ -213,7 +211,6 @@ while getopts "d:g:R:a:hrq:i:s:p:l:y:z:S:C:D:Q:L:b:t:x" opt; do
 	L) long_queue_time=$OPTARG ;;
 	x) nofrag=1 ;;
 	b) ligation=$OPTARG ;;
-	t) threads=$OPTARG ;;
 	[?]) printHelpAndExit 1;;
     esac
 done
@@ -305,29 +302,6 @@ if [ ! -e "$site_file" ] && [ "$nofrag" -ne 1 ]
 then
     echo "***! $site_file does not exist. It must be created before running this script."
     exit 1
-fi
-
-## Set threads for sending appropriate parameters to cluster and string for BWA call
-if [ -z "$threads" ]
-then
-    # default is 8 threads; may need to adjust
-    if [ $isRice -eq 1 ]
-    then
-	threads=8
-    elif [ $isBCM -eq 1 ]
-    then
-	threads=24
-    else
-	threads=16 # VOLTRON; may need to make this separate and specific for Voltron
-    fi
-fi
-
-threadstring="-t $threads"
-alloc_mem=$(($threads * 5000))
-
-if [ $alloc_mem -gt 40000 ]
-then
-    alloc_mem=40000
 fi
 
 ## Directories to be created and regex strings for listing files
@@ -433,7 +407,6 @@ jid=`sbatch <<- HEADER | egrep -o -e "\b[0-9]+$"
 	# Get version numbers of all software
 	echo -ne "Juicer version $juicer_version;" 
 	bwa 2>&1 | awk '\\\$1=="Version:"{printf(" BWA %s; ", \\\$2)}'
-	echo -ne "$threads threads; "
 	if [ -n "$splitme" ]
 	then
 		echo -ne "splitsize $splitsize; "
@@ -584,16 +557,16 @@ CNTLIG`
 		#SBATCH --output $debugdir/align1-%j.out
 		#SBATCH --error $debugdir/align1-%j.err
 		#SBATCH --time 1-00:00:00
-		#SBATCH --cpus-per-task $threads
-		#SBATCH --mem $alloc_mem
+		#SBATCH --cpus-per-task 32
+		#SBATCH --mem 0
 		#SBATCH --job-name "${groupname}_align1_${jname}"
 		$load_bwa
 		# Align read1
 		date
 		if [ -n "$shortread" ] || [ "$shortreadend" -eq 1 ]
 		then
-			echo 'Running command bwa aln $threadstring -q 15 $refSeq $name1$ext > $name1$ext.sai && bwa samse $refSeq $name1$ext.sai $name1$ext > $name1$ext.sam'
-			srun --ntasks=1 bwa aln $threadstring -q 15 $refSeq $name1$ext > $name1$ext.sai && srun --ntasks=1 bwa samse $refSeq $name1$ext.sai $name1$ext > $name1$ext.sam
+			echo 'Running command bwa aln -t \${SLURM_CPUS_PER_TASK} -q 15 $refSeq $name1$ext > $name1$ext.sai && bwa samse $refSeq $name1$ext.sai $name1$ext > $name1$ext.sam'
+			srun --ntasks=1 bwa aln -t \${SLURM_CPUS_PER_TASK} -q 15 $refSeq $name1$ext > $name1$ext.sai && srun --ntasks=1 bwa samse $refSeq $name1$ext.sai $name1$ext > $name1$ext.sam
 			if [ \$? -ne 0 ]
 			then
 				touch $errorfile
@@ -603,8 +576,8 @@ CNTLIG`
 				echo "(-: Short align of $name1$ext.sam done successfully"
     			fi
 		else
-			echo 'Running command bwa mem $threadstring $refSeq $name1$ext > $name1$ext.sam '
-			srun --ntasks=1 bwa mem $threadstring $refSeq $name1$ext > $name1$ext.sam
+			echo 'Running command bwa mem -t \${SLURM_CPUS_PER_TASK} $refSeq $name1$ext > $name1$ext.sam '
+			srun --ntasks=1 bwa mem -t \${SLURM_CPUS_PER_TASK} $refSeq $name1$ext > $name1$ext.sam
 			if [ \$? -ne 0 ]
 			then  
 				touch $errorfile
@@ -627,16 +600,16 @@ ALGNR1`
 		#SBATCH --output $debugdir/align2-%j.out
 		#SBATCH --error $debugdir/align2-%j.err
 		#SBATCH --time 1-00:00:00
-		#SBATCH --cpus-per-task $threads
-		#SBATCH --mem $alloc_mem
+		#SBATCH --cpus-per-task 32
+		#SBATCH --mem 0
 		#SBATCH --job-name "${groupname}_align2_${jname}"
 		$load_bwa
 		date
 		# Align read2
 		if [ -n "$shortread" ] || [ "$shortreadend" -eq 2 ]
 		then		
-			echo 'Running command bwa aln $threadstring -q 15 $refSeq $name2$ext > $name2$ext.sai && bwa samse $refSeq $name2$ext.sai $name2$ext > $name2$ext.sam '
-			srun --ntasks=1 bwa aln $threadstring -q 15 $refSeq $name2$ext > $name2$ext.sai && srun --ntasks=1 bwa samse $refSeq $name2$ext.sai $name2$ext > $name2$ext.sam
+			echo 'Running command bwa aln -t \${SLURM_CPUS_PER_TASK} -q 15 $refSeq $name2$ext > $name2$ext.sai && bwa samse $refSeq $name2$ext.sai $name2$ext > $name2$ext.sam '
+			srun --ntasks=1 bwa aln -t \${SLURM_CPUS_PER_TASK} -q 15 $refSeq $name2$ext > $name2$ext.sai && srun --ntasks=1 bwa samse $refSeq $name2$ext.sai $name2$ext > $name2$ext.sam
 			if [ \$? -ne 0 ]
 			then 
 				touch $errorfile
@@ -646,8 +619,8 @@ ALGNR1`
 				echo "(-: Short align of $name2$ext.sam done successfully"
 			fi
 		else	
-			echo 'Running command bwa mem $threadstring $refSeq $name2$ext > $name2$ext.sam'
-			srun --ntasks=1 bwa mem $threadstring $refSeq $name2$ext > $name2$ext.sam
+			echo 'Running command bwa mem -t \${SLURM_CPUS_PER_TASK} $refSeq $name2$ext > $name2$ext.sam'
+			srun --ntasks=1 bwa mem -t \${SLURM_CPUS_PER_TASK} $refSeq $name2$ext > $name2$ext.sam
 			if [ \$? -ne 0 ]
 			then 
 				touch $errorfile
@@ -1095,7 +1068,8 @@ HIC30`
 	else
 		sbatch_wait=""
 	fi
-        if [ $isRice -eq 1 ] || [ $isVoltron -eq 1 ]
+    
+    if [ $isRice -eq 1 ] || [ $isVoltron -eq 1 ]
 	then
 	    jid=`sbatch <<- HICCUPS | egrep -o -e "\b[0-9]+$"
 	#!/bin/bash -l
