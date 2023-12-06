@@ -647,7 +647,6 @@ ALGNR2`
 		#SBATCH --cpus-per-task 8 
 		#SBATCH --dependson $dependalign
 		#SBATCH --job-name "${groupname}_merge_${jname}"
-		#SBATCH --threads-per-core=1
 		export LC_COLLATE=C
 		date
 		if [ ! -f "${touchfile1}" ] || [ ! -f "${touchfile2}" ]
