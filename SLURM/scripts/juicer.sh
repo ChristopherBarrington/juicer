@@ -669,7 +669,7 @@ ALGNR2`
 		#SBATCH --partition $long_queue
 		#SBATCH --output $debugdir/merge-%j.out
 		#SBATCH --error $debugdir/merge-%j.err
-		#SBATCH --mem-per-cpu=14G
+		#SBATCH --mem-per-cpu 7G
 		#SBATCH --time 1-00:00:00
 		#SBATCH --cpus-per-task 8 
 		#SBATCH --dependson $dependalign
@@ -907,7 +907,7 @@ DEDUPGUARD`
     jid=`sbatch <<- DEDUP | egrep -o -e "\b[0-9]+$"
 	#!/bin/bash -l
 	#SBATCH --partition $queue
-	#SBATCH --mem-per-cpu=2G
+	#SBATCH --mem-per-cpu 7G
 	#SBATCH --output $debugdir/dedup-%j.out
 	#SBATCH --error $debugdir/dedup-%j.err
 	#SBATCH --time 00:00:10
@@ -979,7 +979,7 @@ then
 	#SBATCH --time 00:00:10
 	#SBATCH --cpus-per-task 1
 	#SBATCH --ntasks 1
-	#SBATCH --mem-per-cpu=1G
+	#SBATCH --mem-per-cpu 7G
 	#SBATCH --job-name "${groupname}_dupcheck"
 	${sbatch_wait}
 
@@ -1002,7 +1002,7 @@ DUPCHECK`
 		#SBATCH --time 01:00:00
 		#SBATCH --cpus-per-task 1
 		#SBATCH --ntasks 1
-		#SBATCH --mem-per-cpu=6G
+		#SBATCH --mem-per-cpu 7G
 		#SBATCH --job-name "${groupname}_stats"
 		${sbatch_wait}
 
@@ -1043,7 +1043,7 @@ STATS`
 	#SBATCH --time 1-00:00:00
 	#SBATCH --cpus-per-task 1
 	#SBATCH --ntasks 1
-	#SBATCH --mem-per-cpu=32G
+	#SBATCH --mem-per-cpu 7G
 	#SBATCH --job-name "${groupname}_hic"
 	#SBATCH --dependson $dependstats
 	${load_java}
@@ -1073,7 +1073,7 @@ HIC`
 	#SBATCH --time 1-00:00:00
 	#SBATCH --cpus-per-task 1
 	#SBATCH --ntasks 1
-	#SBATCH --mem-per-cpu=32G
+	#SBATCH --mem-per-cpu 7G
 	#SBATCH --job-name "${groupname}_hic30"
 	#SBATCH --dependson ${dependstats}
 	${load_java}
@@ -1111,7 +1111,7 @@ HIC30`
 	    jid=`sbatch <<- HICCUPS | egrep -o -e "\b[0-9]+$"
 	#!/bin/bash -l
 	#SBATCH --partition $queue
-	#SBATCH --mem-per-cpu=2G
+	#SBATCH --mem-per-cpu 7G
 	${sbatch_req}
 	#SBATCH --output $debugdir/hiccups_wrap-%j.out
 	#SBATCH --error $debugdir/hiccups_wrap-%j.err
@@ -1140,7 +1140,7 @@ HICCUPS`
 	jid=`sbatch <<- ARROWS | egrep -o -e "\b[0-9]+$"
 	#!/bin/bash -l
 	#SBATCH --partition $queue
-	#SBATCH --mem-per-cpu=8G
+	#SBATCH --mem-per-cpu 7G
 	#SBATCH --output $debugdir/arrowhead_wrap-%j.out
 	#SBATCH --error $debugdir/arrowhead_wrap-%j.err
 	#SBATCH --time 01:00:00
@@ -1162,7 +1162,7 @@ ARROWS`
 	jid=`sbatch <<- FINCLN1 | egrep -o -e "\b[0-9]+$"
 	#!/bin/bash
 	#SBATCH --partition $queue
-	#SBATCH --mem-per-cpu=2G
+	#SBATCH --mem-per-cpu 7G
 	#SBATCH --output $debugdir/fincln-%j.out
 	#SBATCH --error $debugdir/fincln-%j.err
 	#SBATCH --time 01:00:00
@@ -1179,7 +1179,7 @@ else
 	jid=`sbatch <<- FINCLN1 | egrep -o -e "\b[0-9]+$" 
 	#!/bin/bash
 	#SBATCH --partition $queue
-	#SBATCH --mem-per-cpu=2G
+	#SBATCH --mem-per-cpu 7G
 	#SBATCH --output $debugdir/fincln1-%j.out
 	#SBATCH --error $debugdir/fincln1-%j.err
 	#SBATCH --time 01:00:00
