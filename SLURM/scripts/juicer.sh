@@ -413,7 +413,7 @@ fi
 jid=`sbatch <<- HEADER | egrep -o -e "\b[0-9]+$"
 	#!/bin/bash -l
 	#SBATCH --partition $queue
-	#SBATCH --time 2
+	#SBATCH --time 00:10:00
 	#SBATCH --cpus-per-task 1
 	#SBATCH --output $debugdir/head-%j.out
 	#SBATCH --error $debugdir/head-%j.err
@@ -481,7 +481,7 @@ then
 		    jid=`sbatch <<- SPLITEND | egrep -o -e "\b[0-9]+$"
 			#!/bin/bash -l
 			#SBATCH --partition $queue
-			#SBATCH --time 1440
+			#SBATCH --time 01:00:00
 			#SBATCH --cpus-per-task 1
 			#SBATCH --output $debugdir/split-%j.out
 			#SBATCH --error $debugdir/split-%j.err
@@ -495,7 +495,7 @@ SPLITEND`
 		    jid=`sbatch <<- SPLITEND | egrep -o -e "\b[0-9]+$"
 			#!/bin/bash -l
 			#SBATCH --partition $queue
-			#SBATCH --time 1440
+			#SBATCH --time 01:00:00
 			#SBATCH --cpus-per-task 1
 			#SBATCH --output $debugdir/split-%j.out
 			#SBATCH --error $debugdir/split-%j.err
@@ -511,7 +511,7 @@ SPLITEND`
                 read1=${splitdir}"/*${read1str}*.fastq"
 	    done
 	    
-	    srun --cpus-per-task 1 --partition "$int_queue" --time 1 --output $debugdir/wait-%j.out --error $debugdir/wait-%j.err --dependson $dependsplit --job-name "${groupname}_wait" sleep 1
+	    srun --cpus-per-task 1 --partition "$int_queue" --time 00:00:10 --output $debugdir/wait-%j.out --error $debugdir/wait-%j.err --dependson $dependsplit --job-name "${groupname}_wait" sleep 1
         else
             cp -rs ${fastqdir} ${splitdir}
             wait
@@ -565,7 +565,7 @@ SPLITEND`
 	jid=`sbatch <<- CNTLIG
 		#!/bin/bash -l
 		#SBATCH --partition $queue
-		#SBATCH --time 1440
+		#SBATCH --time 01:00:00
 		#SBATCH --cpus-per-task 1
 		#SBATCH --output $debugdir/count_ligation-%j.out
 		#SBATCH --error $debugdir/count_ligation-%j.err
@@ -583,7 +583,7 @@ CNTLIG`
 		#SBATCH --partition $queue
 		#SBATCH --output $debugdir/align1-%j.out
 		#SBATCH --error $debugdir/align1-%j.err
-		#SBATCH --time 1440
+		#SBATCH --time 1-00:00:00
 		#SBATCH --cpus-per-task $threads
 		#SBATCH --mem $alloc_mem
 		#SBATCH --job-name "${groupname}_align1_${jname}"
@@ -626,7 +626,7 @@ ALGNR1`
 		#SBATCH --partition $queue
 		#SBATCH --output $debugdir/align2-%j.out
 		#SBATCH --error $debugdir/align2-%j.err
-		#SBATCH --time 1440
+		#SBATCH --time 1-00:00:00
 		#SBATCH --cpus-per-task $threads
 		#SBATCH --mem $alloc_mem
 		#SBATCH --job-name "${groupname}_align2_${jname}"
@@ -670,7 +670,7 @@ ALGNR2`
 		#SBATCH --output $debugdir/merge-%j.out
 		#SBATCH --error $debugdir/merge-%j.err
 		#SBATCH --mem-per-cpu=14G
-		#SBATCH --time 1440
+		#SBATCH --time 1-00:00:00
 		#SBATCH --cpus-per-task 8 
 		#SBATCH --dependson $dependalign
 		#SBATCH --job-name "${groupname}_merge_${jname}"
@@ -800,7 +800,7 @@ MRGALL`
 		#!/usr/bin/bash
 		#SBATCH --output $debugdir/aligncheck-%j.out
 		#SBATCH --error $debugdir/aligncheck-%j.err
-		#SBATCH --time 1440
+		#SBATCH --time 00:00:10
 		#SBATCH --partition $queue
 		#SBATCH --job-name "${groupname}_check"
 		#SBATCH --dependson $dependmerge
@@ -830,21 +830,12 @@ then
     
     # merge the sorted files into one giant file that is also sorted.      jid=`sbatch <<- MRGSRT | egrep -o -e "\b[0-9]+$"
     
-    if [ $isVoltron -eq 1 ]
-    then  
-	sbatch_time="#SBATCH --time 10080"
-    else
-	sbatch_time="#SBATCH --time 1440"
-    fi
-
-
-
     jid=`sbatch <<- EOF
 		#!/usr/bin/bash
 		#SBATCH --output $debugdir/fragmerge-%j.out
 		#SBATCH --error $debugdir/fragmerge-%j.err
 		#SBATCH --mem 256000
-		${sbatch_time}
+		#SBATCH --time 3-00:00:00
 		#SBATCH --partition $long_queue
 		#SBATCH --cpus-per-task 8
 		#SBATCH --job-name "${groupname}_fragmerge"
@@ -901,7 +892,7 @@ then
 	#SBATCH --partition $queue
 	#SBATCH --output $debugdir/dedupguard-%j.out
 	#SBATCH --error $debugdir/dedupguard-%j.err
-	#SBATCH --time 10
+	#SBATCH --time 00:00:10
 	#SBATCH --cpus-per-task 1
 	#SBATCH --hold
 	#SBATCH --ntasks 1
@@ -919,7 +910,7 @@ DEDUPGUARD`
 	#SBATCH --mem-per-cpu=2G
 	#SBATCH --output $debugdir/dedup-%j.out
 	#SBATCH --error $debugdir/dedup-%j.err
-	#SBATCH --time 1440
+	#SBATCH --time 00:00:10
 	#SBATCH --cpus-per-task 1
 	#SBATCH --ntasks 1
 	#SBATCH --job-name "${groupname}_dedup"
@@ -934,7 +925,7 @@ DEDUPGUARD`
 	awk -v queue=$long_queue -v groupname=$groupname -v debugdir=$debugdir -v dir=$outputdir -v topDir=$topDir -v juicedir=$juiceDir -v site=$site -v genomeID=$genomeID -v genomePath=$genomePath -v user=$USER -v guardjid=$guardjid -f $juiceDir/scripts/split_rmdups.awk $outputdir/merged_sort.txt
 	##Schedule new job to run after last dedup part:
 	##Push guard to run after last dedup is completed:
-	##srun --ntasks=1 --cpus-per-task 1 --partition "$queue" --time 1 --output ${debugdir}/dedup_requeue-%j.out --error ${debugdir}/dedup-requeue-%j.err --job-name "$groupname_msplit0" --dependson singleton echo ID: $ echo "\${!SLURM_JOB_ID}"; scontrol update JobID=$guardjid dependency=afterok:\$SLURM_JOB_ID
+	##srun --ntasks=1 --cpus-per-task 1 --partition "$queue" --time 00:00:10 --output ${debugdir}/dedup_requeue-%j.out --error ${debugdir}/dedup-requeue-%j.err --job-name "$groupname_msplit0" --dependson singleton echo ID: $ echo "\${!SLURM_JOB_ID}"; scontrol update JobID=$guardjid dependency=afterok:\$SLURM_JOB_ID
 	squeue --user $USER --format "%A %T %j %E %R" | column -t
 	date
 	scontrol release $guardjid
@@ -951,7 +942,7 @@ DEDUP`
 	#SBATCH --partition $queue
 	#SBATCH --output $debugdir/post_dedup-%j.out
 	#SBATCH --error $debugdir/post_dedup-%j.err
-	#SBATCH --time 100
+	#SBATCH --time 00:00:10
 	#SBATCH --cpus-per-task 1
 	#SBATCH --ntasks 1
 	#SBATCH --job-name "${groupname}_post_dedup"
@@ -985,7 +976,7 @@ then
 	#SBATCH --partition $queue
 	#SBATCH --output $debugdir/dupcheck-%j.out
 	#SBATCH --error $debugdir/dupcheck-%j.err
-	#SBATCH --time 1440
+	#SBATCH --time 00:00:10
 	#SBATCH --cpus-per-task 1
 	#SBATCH --ntasks 1
 	#SBATCH --mem-per-cpu=1G
@@ -1008,7 +999,7 @@ DUPCHECK`
 		#SBATCH --partition $long_queue
 		#SBATCH --output $debugdir/stats-%j.out
 		#SBATCH --error $debugdir/stats-%j.err
-		#SBATCH --time 1440
+		#SBATCH --time 01:00:00
 		#SBATCH --cpus-per-task 1
 		#SBATCH --ntasks 1
 		#SBATCH --mem-per-cpu=6G
@@ -1049,7 +1040,7 @@ STATS`
 	#SBATCH --partition $long_queue
 	#SBATCH --output $debugdir/hic-%j.out
 	#SBATCH --error $debugdir/hic-%j.err	
-	#SBATCH --time 1440
+	#SBATCH --time 1-00:00:00
 	#SBATCH --cpus-per-task 1
 	#SBATCH --ntasks 1
 	#SBATCH --mem-per-cpu=32G
@@ -1079,7 +1070,7 @@ HIC`
 	#SBATCH --partition $long_queue
 	#SBATCH --output $debugdir/hic30-%j.out
 	#SBATCH --error $debugdir/hic30-%j.err
-	#SBATCH --time 1440
+	#SBATCH --time 1-00:00:00
 	#SBATCH --cpus-per-task 1
 	#SBATCH --ntasks 1
 	#SBATCH --mem-per-cpu=32G
@@ -1124,7 +1115,7 @@ HIC30`
 	${sbatch_req}
 	#SBATCH --output $debugdir/hiccups_wrap-%j.out
 	#SBATCH --error $debugdir/hiccups_wrap-%j.err
-	#SBATCH --time 1440
+	#SBATCH --time 12:00:00
 	#SBATCH --ntasks 1
 	#SBATCH --job-name "${groupname}_hiccups_wrap"
 	${sbatch_wait}
@@ -1152,7 +1143,7 @@ HICCUPS`
 	#SBATCH --mem-per-cpu=8G
 	#SBATCH --output $debugdir/arrowhead_wrap-%j.out
 	#SBATCH --error $debugdir/arrowhead_wrap-%j.err
-	#SBATCH --time 1440
+	#SBATCH --time 01:00:00
 	#SBATCH --ntasks 1
 	#SBATCH --job-name "${groupname}_arrowhead_wrap"
 	${sbatch_wait}
@@ -1174,7 +1165,7 @@ ARROWS`
 	#SBATCH --mem-per-cpu=2G
 	#SBATCH --output $debugdir/fincln-%j.out
 	#SBATCH --error $debugdir/fincln-%j.err
-	#SBATCH --time 1200
+	#SBATCH --time 01:00:00
 	#SBATCH --cpus-per-task 1
 	#SBATCH --ntasks 1
 	#SBATCH --job-name "${groupname}_prep_done"
@@ -1191,7 +1182,7 @@ else
 	#SBATCH --mem-per-cpu=2G
 	#SBATCH --output $debugdir/fincln1-%j.out
 	#SBATCH --error $debugdir/fincln1-%j.err
-	#SBATCH --time 1200
+	#SBATCH --time 01:00:00
 	#SBATCH --cpus-per-task 1
 	#SBATCH --ntasks 1
 	#SBATCH --job-name "${groupname}_prep_done"     
