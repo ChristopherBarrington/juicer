@@ -1097,15 +1097,11 @@ HIC30`
 	fi
         if [ $isRice -eq 1 ] || [ $isVoltron -eq 1 ]
 	then
-	    if [  $isRice -eq 1 ]
-	    then
-		sbatch_req="#SBATCH --gres=gpu:kepler:1"
-	    fi
 	    jid=`sbatch <<- HICCUPS | egrep -o -e "\b[0-9]+$"
 	#!/bin/bash -l
 	#SBATCH --partition $queue
 	#SBATCH --mem-per-cpu 7G
-	${sbatch_req}
+	#SBATCH --gres gpu:1
 	#SBATCH --output $debugdir/hiccups_wrap-%j.out
 	#SBATCH --error $debugdir/hiccups_wrap-%j.err
 	#SBATCH --time 12:00:00
