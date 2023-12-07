@@ -249,7 +249,7 @@ if [[ -z "$final" && -z "$dedup" && -z "$postproc" && -z "$deduponly" && -z "$me
         if stat -t ${fastqdir} >/dev/null 2>&1
     	then
 	    echo "(-: Looking for fastq files...fastq files exist"
-	    testname=$(ls -l ${fastqdir} | awk 'NR==1{print $9}')
+	    testname=$(ls -1 ${fastqdir} | head -n 1)    
 	    if [ "${testname: -3}" == ".gz" ]
 	    then
 		read1=${splitdir}"/*${read1str}*.fastq.gz"
